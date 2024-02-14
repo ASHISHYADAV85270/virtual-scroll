@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Scroll</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <style>
+    .viewport {
+      overflow: hidden;
+      will-change: transform;
+      position: relative;
+    }
+    .items-class {
+      color: red;
+      height: 50px;
+      width: 90px;
+      background-color: lightgrey;
+    }
+  </style>
+  <body>
+    <div id="virtual-scroll" style="height: 900px; overflow: auto"></div>
+
+    <script>
+      function createVirtualScroll({
+        container,
+        Item,
+        itemCount,
+        height,
+        childHeight,
+        renderAhead = 20,
+      }) {
+        const scrollContainer = container;
+        const totalHeight = itemCount * childHeight;
+
+        function updateScroll() {
+          let scrollTop = 0;
+          scrollTop = scrollContainer.scrollTop;
+          let startNode = Math.floor(scrollTop / childHeight) - renderAhead;
+          startNode = Math.max(0, startNode);
+
+          let visibleNodeCount =
+            Math.ceil(height / childHeight) + 2 * renderAhead;
+          visibleNodeCount = Math.min(itemCount - startNode, visibleNodeCount);
+          const offsetY = startNode * childHeight;
+
+          const visibleChildren = [];
+          for (let i = 0; i < visibleNodeCount; i++) {
+            visibleChildren.push(Item(startNode + i));
+          }
+
+          const viewport = document.createElement("div");
+          viewport.classList.add("viewport");
+          viewport.style.overflow = "hidden";
+          viewport.style.willChange = "transform";
+          viewport.style.height = totalHeight + "px";
+          viewport.style.position = "relative";
+
+          const content = document.createElement("div");
+          content.style.willChange = "transform";
+          content.style.transform = `translateY(${offsetY}px)`;
+
+          visibleChildren.forEach((child) => {
+            content.appendChild(child);
+          });
+
+          viewport.appendChild(content);
+          container.innerHTML = "";
+          container.appendChild(viewport);
+        }
+
+        scrollContainer.addEventListener("scroll", updateScroll);
+        updateScroll();
+      }
+
+      // Usage example:
+      const container = document.getElementById("virtual-scroll");
+
+      function createItem(index) {
+        const item = document.createElement("div");
+        item.innerText = `Item ${index}`;
+        item.classList.add("items-class");
+        return item;
+      }
+
+      createVirtualScroll({
+        container: container,
+        Item: createItem,
+        itemCount: 1000,
+        height: 400,
+        childHeight: 50,
+        renderAhead: 20,
+      });
+    </script>
+  </body>
+</html>
